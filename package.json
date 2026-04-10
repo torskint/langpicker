@@ -1,0 +1,20 @@
+{
+  "name": "langpicker-js",
+  "version": "1.0.0",
+  "description": "A professional, zero-dependency language selector library supporting 50+ languages",
+  "main": "langpicker.js",
+  "module": "langpicker.js",
+  "unpkg": "langpicker.min.js",
+  "jsdelivr": "langpicker.min.js",
+  "files": [
+    "langpicker.js",
+    "langpicker.min.js"
+  ],
+  "keywords": ["language", "selector", "picker", "i18n", "localization", "dropdown"],
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/torskint/langpicker-js"
+  },
+  "author": "torskint"
+}
