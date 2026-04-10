@@ -1,5 +1,5 @@
 /**
- * LangPicker.js v1.1.0
+ * LangPicker.js v1.1.1
  * A professional, zero-dependency language selector library
  * Supports up to 50+ languages | MIT License
  *
@@ -137,10 +137,10 @@
       flex-shrink: 0;
     }
     .lp-flag img {
-      width: 20px;
-      height: 15px;
+      width: 22px;
+      height: 22px;
       object-fit: cover;
-      border-radius: 2px;
+      border-radius: 50%;
       display: block;
     }
 
@@ -287,10 +287,10 @@
       flex-shrink: 0;
     }
     .lp-item-flag img {
-      width: 24px;
-      height: 18px;
+      width: 26px;
+      height: 26px;
       object-fit: cover;
-      border-radius: 2px;
+      border-radius: 50%;
       display: block;
     }
 
