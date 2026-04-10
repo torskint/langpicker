@@ -1,5 +1,5 @@
 /**
- * LangPicker.js v1.1.1
+ * LangPicker.js v1.2.0
  * A professional, zero-dependency language selector library
  * Supports up to 50+ languages | MIT License
  *
@@ -296,7 +296,7 @@
 
     .lp-item-text { display: flex; flex-direction: column; line-height: 1.3; gap: 1px; flex: 1; min-width: 0; }
     .lp-item-native { font-weight: 600; font-size: 13.5px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-    .lp-item-en { font-size: 11.5px; opacity: 0.5; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .lp-item-en { font-size: 11.5px; color: var(--lp-muted-color, currentColor); opacity: var(--lp-muted-opacity, 0.5); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
     .lp-item-check {
       margin-left: auto;
       flex-shrink: 0;
@@ -455,8 +455,18 @@
     position: 'auto',    // 'auto' | 'top' | 'bottom'
     align: 'left',       // 'left' | 'right'
     onChange: null,
-    accentColor: null,
     customLangs: {},     // extend registry: { xx: { name, native, flag, dir } }
+
+    // ── Colors (all optional, override CSS variables)
+    colors: {
+      accent:      null,  // focus ring, active item, checkmark
+      background:  null,  // panel + trigger background
+      border:      null,  // border color
+      text:        null,  // primary text
+      textMuted:   null,  // secondary text (lang name in english)
+      hover:       null,  // item hover background
+      radius:      null,  // border-radius (e.g. '8px', '99px' for pill)
+    },
   };
 
   /* ─────────────────────────────────────────────
@@ -492,6 +502,22 @@
     }
 
     /* ── RENDER ─────────────────────── */
+    _applyColors(el) {
+      const c = this._opt.colors || {};
+      const map = {
+        accent:     '--lp-accent-color',
+        background: '--lp-bg-color',
+        border:     '--lp-border-color',
+        text:       '--lp-color',
+        textMuted:  '--lp-muted-color',
+        hover:      '--lp-hover-color',
+        radius:     '--lp-border-radius',
+      };
+      Object.entries(map).forEach(([key, cssVar]) => {
+        if (c[key]) el.style.setProperty(cssVar, c[key]);
+      });
+    }
+
     _render() {
       const o = this._opt;
       this._target.innerHTML = '';
@@ -506,6 +532,9 @@
         o.display === 'full' ? 'full' : ''
       );
       this._wrap = wrap;
+
+      // Apply color overrides as inline CSS variables
+      this._applyColors(wrap);
 
       // Trigger
       const trigger = document.createElement('button');
