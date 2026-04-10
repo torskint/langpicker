@@ -1,5 +1,5 @@
 /**
- * LangPicker.js v1.0.0
+ * LangPicker.js v1.1.0
  * A professional, zero-dependency language selector library
  * Supports up to 50+ languages | MIT License
  *
@@ -8,6 +8,9 @@
  *
  * Or auto-init via HTML:
  *   <div data-langpicker data-current="fr" data-langs="fr,en,es"></div>
+ *
+ * langs option accepts objects: [{ iso, name, flag }]
+ * where flag can be a URL string (SVG/PNG) or an emoji
  */
 
 (function (global, factory) {
@@ -20,6 +23,7 @@
 
   /* ─────────────────────────────────────────────
      BUILT-IN LANGUAGE REGISTRY (50 languages)
+     flag field = emoji fallback (overridable via langs option)
   ───────────────────────────────────────────── */
   const LANG_REGISTRY = {
     af: { name: 'Afrikaans',    native: 'Afrikaans',    flag: '🇿🇦', dir: 'ltr' },
@@ -31,7 +35,7 @@
     bn: { name: 'Bengali',      native: 'বাংলা',        flag: '🇧🇩', dir: 'ltr' },
     bs: { name: 'Bosnian',      native: 'Bosanski',     flag: '🇧🇦', dir: 'ltr' },
     bg: { name: 'Bulgarian',    native: 'Български',    flag: '🇧🇬', dir: 'ltr' },
-    ca: { name: 'Catalan',      native: 'Català',       flag: '🏳️', dir: 'ltr' },
+    ca: { name: 'Catalan',      native: 'Català',       flag: '🏳️',  dir: 'ltr' },
     zh: { name: 'Chinese',      native: '中文',          flag: '🇨🇳', dir: 'ltr' },
     hr: { name: 'Croatian',     native: 'Hrvatski',     flag: '🇭🇷', dir: 'ltr' },
     cs: { name: 'Czech',        native: 'Čeština',      flag: '🇨🇿', dir: 'ltr' },
@@ -73,7 +77,7 @@
     tr: { name: 'Turkish',      native: 'Türkçe',       flag: '🇹🇷', dir: 'ltr' },
     uk: { name: 'Ukrainian',    native: 'Українська',   flag: '🇺🇦', dir: 'ltr' },
     ur: { name: 'Urdu',         native: 'اردو',         flag: '🇵🇰', dir: 'rtl' },
-    uz: { name: 'Uzbek',        native: 'O\'zbek',      flag: '🇺🇿', dir: 'ltr' },
+    uz: { name: 'Uzbek',        native: "O'zbek",       flag: '🇺🇿', dir: 'ltr' },
     vi: { name: 'Vietnamese',   native: 'Tiếng Việt',   flag: '🇻🇳', dir: 'ltr' },
   };
 
@@ -123,7 +127,23 @@
       border-color: var(--lp-accent);
       box-shadow: 0 0 0 3px color-mix(in srgb, var(--lp-accent) 20%, transparent);
     }
-    .lp-flag { font-size: 18px; line-height: 1; }
+
+    /* ── FLAG — emoji OR img ── */
+    .lp-flag {
+      font-size: 18px;
+      line-height: 1;
+      display: flex;
+      align-items: center;
+      flex-shrink: 0;
+    }
+    .lp-flag img {
+      width: 20px;
+      height: 15px;
+      object-fit: cover;
+      border-radius: 2px;
+      display: block;
+    }
+
     .lp-label { font-weight: 500; letter-spacing: -0.01em; }
     .lp-iso {
       font-size: 11px;
@@ -160,7 +180,6 @@
       overflow: hidden;
       display: flex;
       flex-direction: column;
-
       opacity: 0;
       transform: translateY(-6px) scale(0.98);
       pointer-events: none;
@@ -191,8 +210,7 @@
       padding: 10px 10px 8px;
       border-bottom: 1px solid var(--lp-border);
       background: var(--lp-bg);
-      position: sticky;
-      top: 0;
+      position: relative;
       z-index: 1;
     }
     .lp-search {
@@ -217,8 +235,6 @@
       width: 14px;
       height: 14px;
     }
-    .lp-search-wrap { position: relative; }
-    .lp-search-icon { top: 50%; }
 
     /* ── LIST ── */
     .lp-list {
@@ -259,7 +275,25 @@
       background: color-mix(in srgb, var(--lp-accent) 10%, transparent);
       color: var(--lp-accent);
     }
-    .lp-item-flag { font-size: 20px; line-height: 1; width: 24px; text-align: center; flex-shrink: 0; }
+
+    /* ── ITEM FLAG — emoji OR img ── */
+    .lp-item-flag {
+      font-size: 20px;
+      line-height: 1;
+      width: 28px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+    }
+    .lp-item-flag img {
+      width: 24px;
+      height: 18px;
+      object-fit: cover;
+      border-radius: 2px;
+      display: block;
+    }
+
     .lp-item-text { display: flex; flex-direction: column; line-height: 1.3; gap: 1px; flex: 1; min-width: 0; }
     .lp-item-native { font-weight: 600; font-size: 13.5px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
     .lp-item-en { font-size: 11.5px; opacity: 0.5; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
@@ -331,10 +365,8 @@
     /* ── DISPLAY MODES ── */
     .lp-wrap[data-display="icon"] .lp-label,
     .lp-wrap[data-display="icon"] .lp-iso { display: none; }
-
     .lp-wrap[data-display="code"] .lp-flag { display: none; }
     .lp-wrap[data-display="code"] .lp-label { display: none; }
-
     .lp-wrap[data-display="full"] .lp-iso { display: none; }
   `;
 
@@ -365,12 +397,55 @@
     return null;
   }
 
+  /**
+   * Render a flag — supports emoji string or URL (http/https//)
+   * Returns an HTML string for use inside innerHTML
+   */
+  function renderFlag(flag, cssClass, altText) {
+    if (!flag) return `<span class="${cssClass}" aria-hidden="true"></span>`;
+    const isUrl = /^(https?:)?\/\//.test(flag) || flag.startsWith('/') || flag.includes('.');
+    if (isUrl) {
+      return `<span class="${cssClass}" aria-hidden="true"><img src="${flag}" alt="${altText || ''}" loading="lazy"></span>`;
+    }
+    return `<span class="${cssClass}" aria-hidden="true">${flag}</span>`;
+  }
+
+  /**
+   * Normalize a lang entry from user input.
+   * Accepts any of:
+   *   - ISO string: 'fr'  → looks up registry
+   *   - Object { iso, name, flag } → merges with registry fallback
+   *   - Object { code, name, flag } → same
+   */
+  function normalizeLangEntry(entry, registry) {
+    // Plain ISO string
+    if (typeof entry === 'string') {
+      const meta = registry[entry];
+      if (!meta) { console.warn('[LangPicker] Unknown lang code: ' + entry); return null; }
+      return { code: entry, ...meta };
+    }
+
+    // Object with iso or code
+    const iso = (entry.iso || entry.code || '').toLowerCase();
+    if (!iso) { console.warn('[LangPicker] Lang entry missing iso/code:', entry); return null; }
+
+    const registryMeta = registry[iso] || {};
+
+    return {
+      code:   iso,
+      name:   entry.name   || registryMeta.name   || iso.toUpperCase(),
+      native: entry.native || registryMeta.native  || entry.name || iso.toUpperCase(),
+      flag:   entry.flag   || registryMeta.flag    || '',
+      dir:    entry.dir    || registryMeta.dir     || 'ltr',
+    };
+  }
+
   /* ─────────────────────────────────────────────
      DEFAULTS
   ───────────────────────────────────────────── */
   const DEFAULTS = {
     current: 'en',
-    langs: null,          // null = all 50, or array of ISO codes
+    langs: null,          // null = all built-in | string[] of ISO | object[] { iso, name, flag }
     display: 'native',   // 'native' | 'full' | 'icon' | 'code'
     theme: 'light',      // 'light' | 'dark' | 'minimal'
     size: 'md',          // 'sm' | 'md' | 'lg'
@@ -393,24 +468,21 @@
       this._target = resolveTarget(target);
       if (!this._target) throw new Error('[LangPicker] Target element not found: ' + target);
 
-      // Merge custom langs
+      // Merge custom langs into registry
       this._registry = Object.assign({}, LANG_REGISTRY, this._opt.customLangs);
 
-      // Build active lang list
+      // Build active lang list — supports string[], object[], or null
       if (this._opt.langs) {
         this._langs = this._opt.langs
-          .map(code => {
-            const meta = this._registry[code];
-            if (!meta) console.warn('[LangPicker] Unknown lang code: ' + code);
-            return meta ? { code, ...meta } : null;
-          })
+          .map(entry => normalizeLangEntry(entry, this._registry))
           .filter(Boolean);
       } else {
-        this._langs = Object.entries(this._registry).map(([code, meta]) => ({ code, ...meta }));
+        this._langs = Object.entries(this._registry)
+          .map(([code, meta]) => ({ code, ...meta }));
         this._langs.sort((a, b) => a.name.localeCompare(b.name));
       }
 
-      this._current = this._opt.current;
+      this._current = (this._opt.current || '').toLowerCase();
       this._open = false;
       this._query = '';
 
@@ -487,11 +559,21 @@
       this._renderItems();
     }
 
+    _currentMeta() {
+      // First look in dynamic langs list (may have custom flag)
+      const fromList = this._langs.find(l => l.code === this._current);
+      if (fromList) return fromList;
+      // Fallback to registry
+      const reg = this._registry[this._current];
+      if (reg) return { code: this._current, ...reg };
+      return null;
+    }
+
     _updateTrigger() {
-      const meta = this._registry[this._current];
+      const meta = this._currentMeta();
       if (!meta) return;
       this._trigger.innerHTML = `
-        <span class="lp-flag" aria-hidden="true">${meta.flag}</span>
+        ${renderFlag(meta.flag, 'lp-flag', meta.name)}
         <span class="lp-label">${meta.native}</span>
         <span class="lp-iso">${this._current.toUpperCase()}</span>
         ${SVG_CARET}
@@ -532,7 +614,7 @@
           : '';
 
         btn.innerHTML = `
-          <span class="lp-item-flag" aria-hidden="true">${lang.flag}</span>
+          ${renderFlag(lang.flag, 'lp-item-flag', lang.name)}
           <span class="lp-item-text">
             <span class="lp-item-native">${lang.native}</span>
             <span class="lp-item-en">${lang.name}</span>
@@ -545,17 +627,14 @@
         this._list.appendChild(btn);
       });
 
-      // Scroll active into view
       const active = this._list.querySelector('[data-active]');
       if (active) setTimeout(() => active.scrollIntoView({ block: 'nearest' }), 0);
     }
 
     /* ── INTERACTIONS ─────────────────── */
     _bind() {
-      // Trigger open/close
       this._trigger.addEventListener('click', () => this.toggle());
 
-      // Search
       if (this._searchInput) {
         this._searchInput.addEventListener('input', e => {
           this._query = e.target.value;
@@ -566,25 +645,18 @@
         });
       }
 
-      // Close on outside click
       document.addEventListener('click', e => {
         if (this._open && !this._wrap.contains(e.target)) this.close();
       });
 
-      // Keyboard nav
       this._wrap.addEventListener('keydown', e => {
         if (!this._open) return;
         if (e.key === 'Escape') { this.close(); this._trigger.focus(); }
-        if (e.key === 'Tab') { this.close(); }
+        if (e.key === 'Tab') this.close();
       });
 
-      // Position auto-detection
-      window.addEventListener('scroll', () => {
-        if (this._open) this._updatePosition();
-      }, { passive: true });
-      window.addEventListener('resize', () => {
-        if (this._open) this._updatePosition();
-      }, { passive: true });
+      window.addEventListener('scroll', () => { if (this._open) this._updatePosition(); }, { passive: true });
+      window.addEventListener('resize', () => { if (this._open) this._updatePosition(); }, { passive: true });
     }
 
     _updatePosition() {
@@ -608,17 +680,13 @@
       this.close();
 
       if (typeof this._opt.onChange === 'function') {
-        this._opt.onChange({
-          code,
-          meta: this._registry[code],
-          prev,
-        });
+        const meta = this._currentMeta();
+        this._opt.onChange({ code, meta, prev });
       }
 
-      // Dispatch DOM event
       this._target.dispatchEvent(new CustomEvent('langchange', {
         bubbles: true,
-        detail: { code, meta: this._registry[code], prev }
+        detail: { code, meta: this._currentMeta(), prev }
       }));
     }
 
@@ -644,47 +712,42 @@
       this._trigger.setAttribute('aria-expanded', 'false');
     }
 
-    toggle() {
-      this._open ? this.close() : this.open();
-    }
+    toggle() { this._open ? this.close() : this.open(); }
 
     setLang(code) {
-      if (this._registry[code]) {
-        this._current = code;
+      const c = (code || '').toLowerCase();
+      const exists = this._langs.find(l => l.code === c) || this._registry[c];
+      if (exists) {
+        this._current = c;
         this._updateTrigger();
         this._renderItems(this._query);
       }
     }
 
     getLang() {
-      return { code: this._current, meta: this._registry[this._current] };
+      return { code: this._current, meta: this._currentMeta() };
     }
 
-    destroy() {
-      this._target.innerHTML = '';
-    }
+    destroy() { this._target.innerHTML = ''; }
 
     /* ── STATIC: auto-init ─────────────── */
     static autoInit() {
       document.querySelectorAll('[data-langpicker]').forEach(el => {
         const langs = el.dataset.langs ? el.dataset.langs.split(',').map(s => s.trim()) : null;
         new LangPicker(el, {
-          current: el.dataset.current || 'en',
+          current:  el.dataset.current || 'en',
           langs,
-          theme: el.dataset.theme || 'light',
-          display: el.dataset.display || 'native',
-          size: el.dataset.size || 'md',
-          search: el.dataset.search !== 'false',
+          theme:    el.dataset.theme   || 'light',
+          display:  el.dataset.display || 'native',
+          size:     el.dataset.size    || 'md',
+          search:   el.dataset.search  !== 'false',
         });
       });
     }
 
-    static get registry() {
-      return LANG_REGISTRY;
-    }
+    static get registry() { return LANG_REGISTRY; }
   }
 
-  /* Auto-init on DOMContentLoaded */
   if (typeof document !== 'undefined') {
     if (document.readyState === 'loading') {
       document.addEventListener('DOMContentLoaded', LangPicker.autoInit);
